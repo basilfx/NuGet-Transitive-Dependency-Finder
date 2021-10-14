@@ -8,8 +8,6 @@ namespace NuGetTransitiveDependencyFinder.Wrappers
     using System;
     using System.ComponentModel;
     using System.Diagnostics;
-    using System.Threading;
-    using System.Threading.Tasks;
 
     /// <summary>
     /// A wrapper interface around <see cref="Process"/>, to enable unit testing.
@@ -75,12 +73,8 @@ namespace NuGetTransitiveDependencyFinder.Wrappers
         public void BeginOutputReadLine();
 
         /// <summary>
-        /// Instructs the process component to wait for the associated process to exit, or for the
-        /// <paramref name="cancellationToken"/> to be cancelled.
+        /// Instructs the process component to wait for the associated process to exit.
         /// </summary>
-        /// <param name="cancellationToken">An optional token to cancel the asynchronous operation.</param>
-        /// <returns>A task that will complete when the process has exited, cancellation has been requested, or an error
-        /// occurs.</returns>
-        public Task WaitForExitAsync(CancellationToken cancellationToken = default);
+        public void WaitForExit();
     }
 }

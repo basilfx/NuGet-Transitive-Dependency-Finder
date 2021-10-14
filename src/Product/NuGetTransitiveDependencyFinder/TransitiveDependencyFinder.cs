@@ -7,7 +7,6 @@ namespace NuGetTransitiveDependencyFinder
 {
     using System;
     using System.Diagnostics;
-    using System.Threading.Tasks;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using NuGetTransitiveDependencyFinder.Output;
@@ -53,7 +52,7 @@ namespace NuGetTransitiveDependencyFinder
         }
 
         /// <inheritdoc/>
-        public Task<Projects> RunAsync(string? projectOrSolutionPath, bool collateAllDependencies)
+        public Projects Run(string? projectOrSolutionPath, bool collateAllDependencies)
         {
             if (projectOrSolutionPath == null)
             {
@@ -62,7 +61,7 @@ namespace NuGetTransitiveDependencyFinder
 
             return this.serviceProvider
                 .GetService<IDependencyFinder>()!
-                .RunAsync(projectOrSolutionPath, collateAllDependencies);
+                .Run(projectOrSolutionPath, collateAllDependencies);
         }
 
         /// <summary>

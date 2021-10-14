@@ -7,8 +7,6 @@ namespace NuGetTransitiveDependencyFinder.Wrappers
 {
     using System;
     using System.Diagnostics;
-    using System.Threading;
-    using System.Threading.Tasks;
 
     /// <summary>
     /// A wrapper class around <see cref="Process"/>, to enable unit testing.
@@ -67,7 +65,7 @@ namespace NuGetTransitiveDependencyFinder.Wrappers
             this.process.BeginOutputReadLine();
 
         /// <inheritdoc/>
-        public Task WaitForExitAsync(CancellationToken cancellationToken = default) =>
-            this.process.WaitForExitAsync(cancellationToken);
+        public void WaitForExit() =>
+            this.process.WaitForExit();
     }
 }
