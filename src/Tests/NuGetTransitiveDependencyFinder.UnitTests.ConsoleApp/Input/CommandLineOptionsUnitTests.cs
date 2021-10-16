@@ -56,5 +56,26 @@ namespace NuGetTransitiveDependencyFinder.UnitTests.ConsoleApp.Input
             _ = commandLineOptions.ProjectOrSolution
                 .Should().Be(value);
         }
+
+        /// <summary>
+        /// Tests that when <see cref="CommandLineOptions.Filter"/> is called after being set, it returns the
+        /// value specified.
+        /// </summary>
+        /// <param name="value">The value of <see cref="CommandLineOptions.Filter"/>.</param>
+        [AllCulturesTheory]
+        [InlineData(null)]
+        [InlineData("Filter")]
+        public void Filter_AfterSetting_ReturnsValue(string value)
+        {
+            // Arrange & Act
+            var commandLineOptions = new CommandLineOptions
+            {
+                Filter = value,
+            };
+
+            // Assert
+            _ = commandLineOptions.Filter
+                .Should().Be(value);
+        }
     }
 }
