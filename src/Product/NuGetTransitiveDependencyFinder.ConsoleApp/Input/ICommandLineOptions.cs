@@ -20,5 +20,10 @@ namespace NuGetTransitiveDependencyFinder.ConsoleApp.Input
         /// Gets the file name of the .NET project or solution to analyze.
         /// </summary>
         public string? ProjectOrSolution { get; init; }
+
+        /// <summary>
+        /// Gets the file name of the .NET project or solution to analyze.
+        /// </summary>
+        public string? Filter { get; init; }
     }
 }

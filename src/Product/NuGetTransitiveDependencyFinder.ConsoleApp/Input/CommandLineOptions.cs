@@ -25,5 +25,13 @@ namespace NuGetTransitiveDependencyFinder.ConsoleApp.Input
             HelpText = nameof(ProjectOrSolution),
             ResourceType = typeof(CommandLineHelp))]
         public string? ProjectOrSolution { get; init; }
+
+        /// <inheritdoc/>
+        [Option(
+            'f',
+            "filter",
+            HelpText = nameof(Filter),
+            ResourceType = typeof(CommandLineHelp))]
+        public string? Filter { get; init; }
     }
 }

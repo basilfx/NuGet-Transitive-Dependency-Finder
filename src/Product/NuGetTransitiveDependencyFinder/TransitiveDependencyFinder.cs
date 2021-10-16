@@ -6,6 +6,7 @@
 namespace NuGetTransitiveDependencyFinder
 {
     using System;
+    using System.Text.RegularExpressions;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using NuGetTransitiveDependencyFinder.Output;
@@ -51,16 +52,23 @@ namespace NuGetTransitiveDependencyFinder
         }
 
         /// <inheritdoc/>
-        public Projects Run(string? projectOrSolutionPath, bool collateAllDependencies)
+        public Projects Run(string? projectOrSolutionPath, bool collateAllDependencies, string? filter)
         {
+            var regexFilter = default(Regex?);
+
             if (projectOrSolutionPath == null)
             {
                 throw new ArgumentNullException(nameof(projectOrSolutionPath));
             }
 
+            if (filter is not null)
+            {
+                regexFilter = new Regex(filter, RegexOptions.Compiled);
+            }
+
             return this.serviceProvider
                 .GetService<IDependencyFinder>()!
-                .Run(projectOrSolutionPath, collateAllDependencies);
+                .Run(projectOrSolutionPath, collateAllDependencies, regexFilter);
         }
 
         /// <summary>
