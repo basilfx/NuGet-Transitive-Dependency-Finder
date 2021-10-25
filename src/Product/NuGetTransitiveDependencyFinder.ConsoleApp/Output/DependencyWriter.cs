@@ -27,6 +27,11 @@ namespace NuGetTransitiveDependencyFinder.ConsoleApp.Output
         private static readonly string DependencyPrefix = CreatePrefix(2);
 
         /// <summary>
+        /// The string prefix for each via dependency, which comprises three levels of indentation.
+        /// </summary>
+        private static readonly string ViaPrefix = CreatePrefix(3);
+
+        /// <summary>
         /// The logger object to which to write the output.
         /// </summary>
         private readonly ILogger<DependencyWriter> logger;
@@ -86,6 +91,12 @@ namespace NuGetTransitiveDependencyFinder.ConsoleApp.Output
                     this.logger.LogWarning(
                         DependencyPrefix +
                         string.Format(CultureInfo.CurrentCulture, Information.TransitiveDependency, dependency));
+
+                    foreach (var via in dependency.Via)
+                    {
+                        var viaString = via.ToString();
+                        this.logger.LogDebug(ViaPrefix + viaString);
+                    }
                 }
                 else
                 {
