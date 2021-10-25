@@ -56,8 +56,8 @@ namespace NuGetTransitiveDependencyFinder.ProjectAnalysis
             var result = new Projects(projects.Count);
             foreach (var project in projects)
             {
-                var assetsFiles = this.CreateAssetsFiles(project);
-                if (assetsFiles is null)
+                var assetsFile = this.CreateAssetsFile(project);
+                if (assetsFile is null)
                 {
                     continue;
                 }
@@ -66,12 +66,30 @@ namespace NuGetTransitiveDependencyFinder.ProjectAnalysis
                 foreach (var framework in project.TargetFrameworks)
                 {
                     this.dependencies.Clear();
-                    var libraries = assetsFiles
+
+                    var libraries = assetsFile
+                        .Targets
                         .First(target => target.TargetFramework == framework.FrameworkName)
                         .Libraries
                         .ToImmutableDictionary(library => library.Name, StringComparer.OrdinalIgnoreCase);
-                    this.PopulateDependencies(framework, libraries);
-                    var resultFramework = this.FindTransitiveDependencies(framework, collateAllDependencies);
+
+                    var projectDependencyGroup = assetsFile
+                        .ProjectFileDependencyGroups
+                        .FirstOrDefault(t => MapFrameworkName(t.FrameworkName) == framework.TargetAlias);
+
+                    if (projectDependencyGroup is null)
+                    {
+                        continue;
+                    }
+
+                    var projectDependencies = projectDependencyGroup
+                        .Dependencies
+                        .Select(d => libraries.TryGetValue(d.Split(" ")[0], out var library) ? library : null)
+                        .Where(l => l is not null);
+
+                    this.PopulateDependencies(libraries);
+
+                    var resultFramework = this.FindTransitiveDependencies(framework, projectDependencies!, collateAllDependencies);
 
                     resultProject.Add(resultFramework);
                 }
@@ -81,6 +99,18 @@ namespace NuGetTransitiveDependencyFinder.ProjectAnalysis
 
             return result;
         }
+
+        /// <summary>
+        /// Map a framework name into a framework alias.
+        /// </summary>
+        /// <param name="input">The framework name.</param>
+        /// <returns>The framework alias, or <paramref name="input"/> if unmapped.</returns>
+        private static string MapFrameworkName(string input) =>
+            input switch
+            {
+                ".NETCoreApp,Version=v3.1" => "netcoreapp3.1",
+                _ => input,
+            };
 
         /// <summary>
         /// Creates the collection of .NET projects to analyze.
@@ -105,32 +135,22 @@ namespace NuGetTransitiveDependencyFinder.ProjectAnalysis
             this.dependencyGraph.Create(projectOrSolutionPath);
 
         /// <summary>
-        /// Creates the collection of assets files to be analyzed.
+        /// Creates the assets file to be analyzed.
         /// </summary>
         /// <param name="project">The .NET project to analyze.</param>
-        /// <returns>The collection of assets files.</returns>
-        private IReadOnlyCollection<LockFileTarget>? CreateAssetsFiles(PackageSpec project)
-        {
-            var createdAssets = this.assets
-                .Create(project.FilePath, project.RestoreMetadata.OutputPath);
-
-            return createdAssets?.Targets?.ToArray();
-        }
+        /// <returns>The assets file.</returns>
+        private LockFile? CreateAssetsFile(PackageSpec project) =>
+            this.assets.Create(project.FilePath, project.RestoreMetadata.OutputPath);
 
         /// <summary>
         /// Populates the collection of dependencies for a .NET project and framework combination.
         /// </summary>
-        /// <param name="framework">The .NET project and framework combination to analyze.</param>
         /// <param name="libraries">The collection of all libraries associated with the .NET project and framework
         /// combination.</param>
         private void PopulateDependencies(
-            TargetFrameworkInformation framework,
             IReadOnlyDictionary<string, LockFileTargetLibrary> libraries)
         {
-            foreach (var library in framework
-                .Dependencies
-                .Select(dependency => libraries.TryGetValue(dependency.Name, out var library) ? library : null)
-                .Where(library => library is not null))
+            foreach (var library in libraries.Values)
             {
                 this.RecordDependency(true, library!, libraries);
             }
@@ -169,13 +189,13 @@ namespace NuGetTransitiveDependencyFinder.ProjectAnalysis
         /// Finds the transitive NuGet dependencies by traversing the collection of dependencies previously recorded.
         /// </summary>
         /// <param name="framework">The .NET project and framework combination to analyze.</param>
+        /// <param name="dependencies">The project dependencies.</param>
         /// <param name="collateAllDependencies">A value indicating whether all dependencies, or merely those that are
         /// transitive, should be collated.</param>
         /// <returns>The transitive NuGet dependency information, which can be processed for display.</returns>
-        private Framework FindTransitiveDependencies(TargetFrameworkInformation framework, bool collateAllDependencies)
+        private Framework FindTransitiveDependencies(TargetFrameworkInformation framework, IEnumerable<LockFileTargetLibrary> dependencies, bool collateAllDependencies)
         {
-            foreach (var dependency in framework
-                .Dependencies
+            foreach (var dependency in dependencies
                 .Select(dependency =>
                     !string.Equals(dependency.Name, "NETStandard.Library", StringComparison.OrdinalIgnoreCase) &&
                     this.dependencies.TryGetValue(dependency.Name, out var value) ? value : null)
